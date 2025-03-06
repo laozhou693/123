@@ -1,0 +1,44 @@
+using System;  
+
+public class ToeplitzMatrix  
+{  
+    public static bool IsToeplitzMatrix(int[,] matrix)  
+    {  
+        int rows = matrix.GetLength(0);  
+        int cols = matrix.GetLength(1);  
+
+        // 检查每一条对角线  
+        for (int i = 0; i < rows; i++)  
+        {  
+            for (int j = 0; j < cols; j++)  
+            {  
+                // 如果当前元素不是对角线的第一个元素，并且它与左上角的元素不相同，则不是托普利茨矩阵  
+                if (i > 0 && j > 0 && matrix[i - 1, j - 1] != matrix[i, j])  
+                {  
+                    return false;  
+                }  
+            }  
+        }  
+
+        // 所有对角线都满足条件，是托普利茨矩阵  
+        return true;  
+    }  
+
+    public static void Main(string[] args)  
+    {  
+        // 示例矩阵  
+        int[,] matrix1 = {  
+            {1, 2, 3, 4},  
+            {5, 1, 2, 3},  
+            {9, 5, 1, 2}  
+        };  
+
+        int[,] matrix2 = {  
+            {1, 2},  
+            {2, 2}  
+        };  
+
+        Console.WriteLine("矩阵 1 是否是托普利茨矩阵: " + IsToeplitzMatrix(matrix1)); // 输出: True  
+        Console.WriteLine("矩阵 2 是否是托普利茨矩阵: " + IsToeplitzMatrix(matrix2)); // 输出: False  
+    }  
+}  
