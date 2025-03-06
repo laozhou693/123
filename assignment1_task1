@@ -1,0 +1,66 @@
+using System;  
+
+class Program  
+{  
+    static void Main(string[] args)  
+    {  
+        double num1, num2, result = 0;  
+        string operation;  
+
+        Console.WriteLine("简单计算器");  
+        Console.WriteLine("==========");  
+
+        // 获取第一个数字  
+        Console.Write("请输入第一个数字: ");  
+        while (!double.TryParse(Console.ReadLine(), out num1))  
+        {  
+            Console.WriteLine("无效输入。请重新输入一个数字。");  
+            Console.Write("请输入第一个数字: ");  
+        }  
+
+        // 获取运算符  
+        Console.Write("请输入运算符 (+, -, *, /): ");  
+        operation = Console.ReadLine();  
+
+        // 获取第二个数字  
+        Console.Write("请输入第二个数字: ");  
+        while (!double.TryParse(Console.ReadLine(), out num2))  
+        {  
+            Console.WriteLine("无效输入。请重新输入一个数字。");  
+            Console.Write("请输入第二个数字: ");  
+        }  
+
+        // 执行计算  
+        switch (operation)  
+        {  
+            case "+":  
+                result = num1 + num2;  
+                break;  
+            case "-":  
+                result = num1 - num2;  
+                break;  
+            case "*":  
+                result = num1 * num2;  
+                break;  
+            case "/":  
+                if (num2 != 0)  
+                {  
+                    result = num1 / num2;  
+                }  
+                else  
+                {  
+                    Console.WriteLine("错误：除数不能为零。");  
+                    return; // 退出程序  
+                }  
+                break;  
+            default:  
+                Console.WriteLine("无效的运算符。");  
+                return; // 退出程序  
+        }  
+
+        // 显示结果  
+        Console.WriteLine("结果: " + result);  
+
+        Console.ReadKey(); // 防止控制台窗口立即关闭  
+    }  
+}  
