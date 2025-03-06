@@ -1,0 +1,49 @@
+using System;  
+using System.Collections.Generic;  
+
+class Program  
+{  
+    static List<int> PrimeFactors(int number)  
+    {  
+        List<int> factors = new List<int>();  
+        int divisor = 2;  
+
+        while (number > 1)  
+        {  
+            while (number % divisor == 0)  
+            {  
+                factors.Add(divisor);  
+                number /= divisor;  
+            }  
+            divisor++;  
+
+            // 优化：如果 divisor * divisor 大于 number，则 number 必定是素数  
+            if (divisor * divisor > number)  
+            {  
+                if (number > 1)  
+                {  
+                    factors.Add(number);  
+                }  
+                break;  
+            }  
+        }  
+
+        return factors;  
+    }  
+
+    static void Main(string[] args)  
+    {  
+        Console.Write("请输入一个整数：");  
+        if (int.TryParse(Console.ReadLine(), out int number))  
+        {  
+            List<int> primeFactors = PrimeFactors(number);  
+
+            Console.WriteLine($"数字 {number} 的素数因子是：");  
+            Console.WriteLine(string.Join(", ", primeFactors));  
+        }  
+        else  
+        {  
+            Console.WriteLine("无效的输入，请输入一个整数。");  
+        }  
+    }  
+}  
