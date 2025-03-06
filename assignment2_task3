@@ -1,0 +1,38 @@
+using System;  
+using System.Collections;  
+
+public class Sieve  
+{  
+    public static void Main(string[] args)  
+    {  
+        int n = 100; // 上限  
+        BitArray isPrime = new BitArray(n + 1, true); // 假设所有数字都是素数  
+
+        // 0 和 1 不是素数  
+        isPrime[0] = false;  
+        isPrime[1] = false;  
+
+        // 从 2 开始，直到 sqrt(n)  
+        for (int p = 2; p * p <= n; p++)  
+        {  
+            // 如果 p 是素数  
+            if (isPrime[p])  
+            {  
+                // 将 p 的所有倍数标记为非素数  
+                for (int i = p * p; i <= n; i += p)  
+                    isPrime[i] = false;  
+            }  
+        }  
+
+        // 输出所有素数  
+        Console.WriteLine("2 到 100 以内的素数：");  
+        for (int i = 2; i <= n; i++)  
+        {  
+            if (isPrime[i])  
+            {  
+                Console.Write(i + " ");  
+            }  
+        }  
+        Console.WriteLine();  
+    }  
+}  
