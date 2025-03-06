@@ -1,0 +1,57 @@
+using System;  
+using System.Linq; // 为了使用 Linq 方法 (Max, Min, Average, Sum)  
+
+class Program  
+{  
+    static void Main(string[] args)  
+    {  
+        // 示例数组  
+        int[] numbers = { 5, 2, 9, 1, 5, 6 };  
+
+        // 检查数组是否为空  
+        if (numbers == null || numbers.Length == 0)  
+        {  
+            Console.WriteLine("数组为空，无法计算。");  
+            return;  
+        }  
+
+        // 使用 LINQ 计算最大值、最小值、平均值和总和  
+        int max = numbers.Max();  
+        int min = numbers.Min();  
+        double average = numbers.Average(); // 平均值通常是 double 类型  
+        int sum = numbers.Sum();  
+
+        // 输出结果  
+        Console.WriteLine($"数组: {string.Join(", ", numbers)}");  
+        Console.WriteLine($"最大值: {max}");  
+        Console.WriteLine($"最小值: {min}");  
+        Console.WriteLine($"平均值: {average}");  
+        Console.WriteLine($"总和: {sum}");  
+
+        // 不使用 LINQ 的实现方式（作为参考）  
+        int maxNoLinq = numbers[0];  
+        int minNoLinq = numbers[0];  
+        int sumNoLinq = 0;  
+
+        foreach (int number in numbers)  
+        {  
+            if (number > maxNoLinq)  
+            {  
+                maxNoLinq = number;  
+            }  
+            if (number < minNoLinq)  
+            {  
+                minNoLinq = number;  
+            }  
+            sumNoLinq += number;  
+        }  
+
+        double averageNoLinq = (double)sumNoLinq / numbers.Length;  
+
+        Console.WriteLine("\n不使用 LINQ 的结果 (仅供参考):");  
+        Console.WriteLine($"最大值: {maxNoLinq}");  
+        Console.WriteLine($"最小值: {minNoLinq}");  
+        Console.WriteLine($"平均值: {averageNoLinq}");  
+        Console.WriteLine($"总和: {sumNoLinq}");  
+    }  
+}  
