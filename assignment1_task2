@@ -1,0 +1,73 @@
+using System;  
+using System.Windows.Forms;  
+
+namespace CalculatorApp  
+{  
+    public partial class CalculatorForm : Form  
+    {  
+        public CalculatorForm()  
+        {  
+            InitializeComponent();  
+        }  
+
+        private void calculateButton_Click(object sender, EventArgs e)  
+        {  
+            double num1, num2, result = 0;  
+            string operation = operatorComboBox.SelectedItem?.ToString(); // 获取选中的运算符  
+
+            // 检查输入是否有效  
+            if (!double.TryParse(textBox1.Text, out num1))  
+            {  
+                MessageBox.Show("第一个数字输入无效。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);  
+                return;  
+            }  
+
+            if (!double.TryParse(textBox2.Text, out num2))  
+            {  
+                MessageBox.Show("第二个数字输入无效。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);  
+                return;  
+            }  
+
+            if (string.IsNullOrEmpty(operation))  
+            {  
+                MessageBox.Show("请选择一个运算符。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);  
+                return;  
+            }  
+
+            // 执行计算  
+            try  
+            {  
+                switch (operation)  
+                {  
+                    case "+":  
+                        result = num1 + num2;  
+                        break;  
+                    case "-":  
+                        result = num1 - num2;  
+                        break;  
+                    case "*":  
+                        result = num1 * num2;  
+                        break;  
+                    case "/":  
+                        if (num2 == 0)  
+                        {  
+                            MessageBox.Show("除数不能为零。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);  
+                            return;  
+                        }  
+                        result = num1 / num2;  
+                        break;  
+                    default:  
+                        MessageBox.Show("无效的运算符。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);  
+                        return;  
+                }  
+
+                // 显示结果  
+                resultLabel.Text = "结果: " + result.ToString();  
+            }  
+            catch (Exception ex)  
+            {  
+                MessageBox.Show("计算过程中发生错误：" + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);  
+            }  
+        }  
+    }  
+}  
