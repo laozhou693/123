@@ -1,0 +1,96 @@
+using System;
+
+// 定义一个抽象的形状类，包含一个计算面积的抽象方法和一个判断形状是否合法的抽象方法
+public abstract class Shape
+{
+    public abstract double CalculateArea();
+    public abstract bool IsShapeValid();
+}
+
+// 定义一个接口，用于表示可以计算面积的对象
+public interface IAreaCalculable
+{
+    double CalculateArea();
+}
+
+// 长方形类
+public class Rectangle : Shape, IAreaCalculable
+{
+    public double Length { get; set; }
+    public double Width { get; set; }
+
+    public Rectangle(double length, double width)
+    {
+        Length = length;
+        Width = width;
+    }
+
+    public override double CalculateArea()
+    {
+        return Length * Width;
+    }
+
+    public override bool IsShapeValid()
+    {
+        return Length > 0 && Width > 0;
+    }
+}
+
+// 正方形类
+public class Square : Shape, IAreaCalculable
+{
+    public double Side { get; set; }
+
+    public Square(double side)
+    {
+        Side = side;
+    }
+
+    public override double CalculateArea()
+    {
+        return Side * Side;
+    }
+
+    public override bool IsShapeValid()
+    {
+        return Side > 0;
+    }
+}
+
+// 三角形类
+public class Triangle : Shape, IAreaCalculable
+{
+    public double Base { get; set; }
+    public double Height { get; set; }
+
+    public Triangle(double @base, double height)
+    {
+        Base = @base;
+        Height = height;
+    }
+
+    public override double CalculateArea()
+    {
+        return 0.5 * Base * Height;
+    }
+
+    public override bool IsShapeValid()
+    {
+        return Base > 0 && Height > 0;
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Rectangle rectangle = new Rectangle(5, 10);
+        Console.WriteLine($"Rectangle Area: {rectangle.CalculateArea()}, Valid: {rectangle.IsShapeValid()}");
+
+        Square square = new Square(5);
+        Console.WriteLine($"Square Area: {square.CalculateArea()}, Valid: {square.IsShapeValid()}");
+
+        Triangle triangle = new Triangle(3, 4);
+        Console.WriteLine($"Triangle Area: {triangle.CalculateArea()}, Valid: {triangle.IsShapeValid()}");
+    }
+}
