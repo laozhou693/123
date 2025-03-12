@@ -1,0 +1,107 @@
+using System;
+
+// 步骤1: 定义形状接口和具体的形状类
+public interface IShape
+{
+    double CalculateArea();
+}
+
+public class Circle : IShape
+{
+    public double Radius { get; set; }
+
+    public Circle(double radius)
+    {
+        Radius = radius;
+    }
+
+    public double CalculateArea()
+    {
+        return Math.PI * Radius * Radius;
+    }
+}
+
+public class Rectangle : IShape
+{
+    public double Width { get; set; }
+    public double Height { get; set; }
+
+    public Rectangle(double width, double height)
+    {
+        Width = width;
+        Height = height;
+    }
+
+    public double CalculateArea()
+    {
+        return Width * Height;
+    }
+}
+
+public class Triangle : IShape
+{
+    public double Base { get; set; }
+    public double Height { get; set; }
+
+    public Triangle(double baseLength, double height)
+    {
+        Base = baseLength;
+        Height = height;
+    }
+
+    public double CalculateArea()
+    {
+        return 0.5 * Base * Height;
+    }
+}
+
+// 步骤2: 实现简单工厂来创建形状对象
+public class ShapeFactory
+{
+    public static IShape CreateShape(string shapeType, params double[] dimensions)
+    {
+        switch (shapeType.ToLower())
+        {
+            case "circle":
+                return new Circle(dimensions[0]);
+            case "rectangle":
+                return new Rectangle(dimensions[0], dimensions[1]);
+            case "triangle":
+                return new Triangle(dimensions[0], dimensions[1]);
+            default:
+                throw new ArgumentException("Invalid shape type");
+        }
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Random rand = new Random();
+        IShape[] shapes = new IShape[10];
+        double totalArea = 0;
+
+        for (int i = 0; i < 10; i++)
+        {
+            int shapeType = rand.Next(3); // 0 for Circle, 1 for Rectangle, 2 for Triangle
+
+            switch (shapeType)
+            {
+                case 0:
+                    shapes[i] = ShapeFactory.CreateShape("circle", rand.NextDouble() * 10); // Random radius between 0 and 10
+                    break;
+                case 1:
+                    shapes[i] = ShapeFactory.CreateShape("rectangle", rand.NextDouble() * 10, rand.NextDouble() * 10); // Random width and height between 0 and 10
+                    break;
+                case 2:
+                    shapes[i] = ShapeFactory.CreateShape("triangle", rand.NextDouble() * 10, rand.NextDouble() * 10); // Random base and height between 0 and 10
+                    break;
+            }
+
+            totalArea += shapes[i].CalculateArea();
+        }
+
+        Console.WriteLine($"Total area of the 10 shapes is: {totalArea}");
+    }
+}
