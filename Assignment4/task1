@@ -1,0 +1,77 @@
+using System;
+
+public class ListNode<T>
+{
+    public T Value { get; set; }
+    public ListNode<T> Next { get; set; }
+
+    public ListNode(T value)
+    {
+        Value = value;
+        Next = null;
+    }
+}
+
+public class GenericLinkedList<T>
+{
+    private ListNode<T> head;
+
+    public void Add(T value)
+    {
+        if (head == null)
+        {
+            head = new ListNode<T>(value);
+        }
+        else
+        {
+            ListNode<T> current = head;
+            while (current.Next != null)
+            {
+                current = current.Next;
+            }
+            current.Next = new ListNode<T>(value);
+        }
+    }
+
+    public void ForEach(Action<T> action)
+    {
+        ListNode<T> current = head;
+        while (current != null)
+        {
+            action(current.Value);
+            current = current.Next;
+        }
+    }
+}
+
+
+class Program
+{
+    static void Main()
+    {
+        GenericLinkedList<int> list = new GenericLinkedList<int>();
+        list.Add(1);
+        list.Add(2);
+        list.Add(3);
+        list.Add(4);
+        list.Add(5);
+
+        // 打印链表元素
+        list.ForEach(value => Console.WriteLine(value));
+
+        // 求最大值
+        int max = int.MinValue;
+        list.ForEach(value => { if (value > max) max = value; });
+        Console.WriteLine("Max: " + max);
+
+        // 求最小值
+        int min = int.MaxValue;
+        list.ForEach(value => { if (value < min) min = value; });
+        Console.WriteLine("Min: " + min);
+
+        // 求和
+        int sum = 0;
+        list.ForEach(value => sum += value);
+        Console.WriteLine("Sum: " + sum);
+    }
+}
