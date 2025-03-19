@@ -1,0 +1,46 @@
+using System;
+using System.Threading;
+
+public class Clock
+{
+    // 定义 Tick 事件
+    public event Action Tick;
+    // 定义 Alarm 事件
+    public event Action Alarm;
+
+    // 模拟时间流逝的方法
+    public void Start(int durationInSeconds, int alarmTimeInSeconds)
+    {
+        int currentTime = 0;
+        while (currentTime < durationInSeconds)
+        {
+            // 每秒触发一次 Tick 事件
+            Tick?.Invoke();
+            Thread.Sleep(1000); // 暂停一秒来模拟时间流逝
+            currentTime++;
+
+            // 当当前时间等于设定的闹钟时间时，触发 Alarm 事件
+            if (currentTime == alarmTimeInSeconds)
+            {
+                Alarm?.Invoke();
+            }
+        }
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Clock clock = new Clock();
+
+        // 订阅 Tick 事件
+        clock.Tick += () => Console.WriteLine("Tick...");
+
+        // 订阅 Alarm 事件
+        clock.Alarm += () => Console.WriteLine("Alarm! Wake up!");
+
+        // 设置闹钟持续时间为 10 秒，闹钟在 5 秒时响起
+        clock.Start(10, 5);
+    }
+}
