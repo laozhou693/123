@@ -1,0 +1,210 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Product
+{
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+
+    public override bool Equals(object obj)
+    {
+        return obj is Product product &&
+               Name == product.Name &&
+               Price == product.Price;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Name, Price);
+    }
+
+    public override string ToString()
+    {
+        return $"{Name} - {Price:C}";
+    }
+}
+
+public class Customer
+{
+    public string Name { get; set; }
+
+    public override bool Equals(object obj)
+    {
+        return obj is Customer customer &&
+               Name == customer.Name;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Name);
+    }
+
+    public override string ToString()
+    {
+        return Name;
+    }
+}
+
+public class OrderDetails
+{
+    public Product Product { get; set; }
+    public int Quantity { get; set; }
+
+    public decimal TotalPrice => Product.Price * Quantity;
+
+    public override bool Equals(object obj)
+    {
+        return obj is OrderDetails details &&
+               EqualityComparer<Product>.Default.Equals(Product, details.Product) &&
+               Quantity == details.Quantity;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Product, Quantity);
+    }
+
+    public override string ToString()
+    {
+        return $"{Product} x {Quantity} = {TotalPrice:C}";
+    }
+}
+
+public class Order
+{
+    public string OrderNumber { get; set; }
+    public Customer Customer { get; set; }
+    public List<OrderDetails> Details { get; set; }
+
+    public decimal TotalAmount => Details.Sum(d => d.TotalPrice);
+
+    public override bool Equals(object obj)
+    {
+        return obj is Order order &&
+               OrderNumber == order.OrderNumber;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(OrderNumber);
+    }
+
+    public override string ToString()
+    {
+        return $"Order Number: {OrderNumber}, Customer: {Customer}, Total Amount: {TotalAmount:C}";
+    }
+}
+
+public class OrderService
+{
+    private List<Order> orders = new List<Order>();
+
+    public void AddOrder(Order order)
+    {
+        if (orders.Contains(order))
+        {
+            throw new Exception("Order already exists.");
+        }
+        orders.Add(order);
+    }
+
+    public void RemoveOrder(string orderNumber)
+    {
+        var order = orders.FirstOrDefault(o => o.OrderNumber == orderNumber);
+        if (order == null)
+        {
+            throw new Exception("Order not found.");
+        }
+        orders.Remove(order);
+    }
+
+    public void UpdateOrder(Order order)
+    {
+        RemoveOrder(order.OrderNumber);
+        AddOrder(order);
+    }
+
+    public IEnumerable<Order> QueryOrders(Func<Order, bool> predicate)
+    {
+        return orders.Where(predicate).OrderByDescending(o => o.TotalAmount);
+    }
+
+    public void SortOrders(Func<Order, object> keySelector = null)
+    {
+        if (keySelector == null)
+        {
+            orders = orders.OrderBy(o => o.OrderNumber).ToList();
+        }
+        else
+        {
+            orders = orders.OrderBy(keySelector).ToList();
+        }
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        var orderService = new OrderService();
+        var customer1 = new Customer { Name = "John Doe" };
+        var product1 = new Product { Name = "Laptop", Price = 1000 };
+        var product2 = new Product { Name = "Mouse", Price = 20 };
+
+        var order1 = new Order
+        {
+            OrderNumber = "ORD001",
+            Customer = customer1,
+            Details = new List<OrderDetails>
+            {
+                new OrderDetails { Product = product1, Quantity = 1 },
+                new OrderDetails { Product = product2, Quantity = 2 }
+            }
+        };
+
+        // 添加订单
+        orderService.AddOrder(order1);
+
+        //尝试添加重复订单
+        try
+        {
+            orderService.AddOrder(order1);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        // 删除订单
+        orderService.RemoveOrder("ORD001");
+
+        //尝试删除不存在的订单
+        try
+        {
+            orderService.RemoveOrder("ORD002");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        // 修改订单
+        order1.Details.Add(new OrderDetails { Product = new Product { Name = "Keyboard", Price = 50 }, Quantity = 1 });
+        orderService.UpdateOrder(order1);
+
+        // 查询订单
+        var queriedOrders = orderService.QueryOrders(o => o.Customer.Name == "John Doe");
+        foreach (var order in queriedOrders)
+        {
+            Console.WriteLine(order);
+        }
+
+        // 排序订单
+        orderService.SortOrders(o => o.TotalAmount);
+        foreach (var order in orderService.QueryOrders(o => true))
+        {
+            Console.WriteLine(order);
+        }
+    }
+}
