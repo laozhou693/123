@@ -1,0 +1,102 @@
+using System;
+using System.Windows.Forms;
+
+namespace OrderManagement.WinForms
+{
+    public partial class QueryForm : Form
+    {
+        public QueryType QueryType { get; private set; }
+        public int OrderId { get; private set; }
+        public string ProductName { get; private set; }
+        public string Customer { get; private set; }
+        public decimal MinAmount { get; private set; }
+        public decimal MaxAmount { get; private set; }
+
+        public QueryForm()
+        {
+            InitializeComponent();
+            QueryType = QueryType.ByOrderId; // 默认查询方式
+        }
+
+        private void rbOrderId_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbOrderId.Checked)
+            {
+                QueryType = QueryType.ByOrderId;
+                pnlOrderId.BringToFront();
+            }
+        }
+
+        private void rbProductName_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbProductName.Checked)
+            {
+                QueryType = QueryType.ByProductName;
+                pnlProductName.BringToFront();
+            }
+        }
+
+        private void rbCustomer_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbCustomer.Checked)
+            {
+                QueryType = QueryType.ByCustomer;
+                pnlCustomer.BringToFront();
+            }
+        }
+
+        private void rbAmountRange_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbAmountRange.Checked)
+            {
+                QueryType = QueryType.ByAmountRange;
+                pnlAmountRange.BringToFront();
+            }
+        }
+
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                switch (QueryType)
+                {
+                    case QueryType.ByOrderId:
+                        OrderId = int.Parse(txtOrderId.Text);
+                        break;
+                    case QueryType.ByProductName:
+                        ProductName = txtProductName.Text;
+                        break;
+                    case QueryType.ByCustomer:
+                        Customer = txtCustomer.Text;
+                        break;
+                    case QueryType.ByAmountRange:
+                        MinAmount = decimal.Parse(txtMinAmount.Text);
+                        MaxAmount = decimal.Parse(txtMaxAmount.Text);
+                        if (MinAmount > MaxAmount)
+                        {
+                            MessageBox.Show("最小金额不能大于最大金额", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+                        break;
+                }
+
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("请输入有效的数值", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"查询参数错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+    }
+}
