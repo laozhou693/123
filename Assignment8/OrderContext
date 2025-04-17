@@ -1,0 +1,48 @@
+using Microsoft.EntityFrameworkCore;
+using OrderManagement.Core.Models;
+
+namespace OrderManagement.Core.Data
+{
+    public class OrderContext : DbContext
+    {
+        public OrderContext(DbContextOptions<OrderContext> options) : base(options)
+        {
+        }
+
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Product> Products { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // 配置关系
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Customer)
+                .WithMany(c => c.Orders)
+                .HasForeignKey(o => o.CustomerId);
+            
+            modelBuilder.Entity<OrderDetail>()
+                .HasOne(od => od.Order)
+                .WithMany(o => o.OrderDetails)
+                .HasForeignKey(od => od.OrderId);
+            
+            modelBuilder.Entity<OrderDetail>()
+                .HasOne(od => od.Product)
+                .WithMany(p => p.OrderDetails)
+                .HasForeignKey(od => od.ProductId);
+            
+            // 配置种子数据
+            modelBuilder.Entity<Customer>().HasData(
+                new Customer { CustomerId = 1, Name = "张三", Email = "zhangsan@example.com" },
+                new Customer { CustomerId = 2, Name = "李四", Email = "lisi@example.com" }
+            );
+            
+            modelBuilder.Entity<Product>().HasData(
+                new Product { ProductId = 1, Name = "商品1", Price = 100.50m },
+                new Product { ProductId = 2, Name = "商品2", Price = 200.00m },
+                new Product { ProductId = 3, Name = "商品3", Price = 50.75m }
+            );
+        }
+    }
+}
