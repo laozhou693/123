@@ -1,0 +1,195 @@
+using OrderManagement.Core;
+using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+
+namespace OrderManagement.WinForms
+{
+    public partial class OrderEditForm : Form
+    {
+        private Order currentOrder;
+        private OrderService orderService;
+        private BindingSource detailBindingSource = new BindingSource();
+
+        public OrderEditForm(Order order, OrderService service)
+        {
+            InitializeComponent();
+            currentOrder = order;
+            orderService = service;
+
+            if (currentOrder == null)
+            {
+                // 新建订单
+                currentOrder = new Order(0, "");
+                this.Text = "新建订单";
+            }
+            else
+            {
+                // 编辑现有订单
+                this.Text = "编辑订单";
+            }
+
+            InitializeDataBinding();
+            SetupControls();
+        }
+
+        private void InitializeDataBinding()
+        {
+            // 订单基本信息绑定
+            txtOrderId.DataBindings.Add("Text", currentOrder, "OrderId");
+            txtCustomer.DataBindings.Add("Text", currentOrder, "Customer");
+            dtpOrderDate.DataBindings.Add("Value", currentOrder, "OrderDate");
+
+            // 订单明细绑定
+            detailBindingSource.DataSource = currentOrder.Details;
+            dgvDetails.DataSource = detailBindingSource;
+            dgvDetails.AutoGenerateColumns = false;
+
+            // 设置DataGridView列
+            dgvDetails.Columns.Clear();
+            dgvDetails.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "ProductName",
+                HeaderText = "商品名称"
+            });
+            dgvDetails.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Price",
+                HeaderText = "单价",
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "C2" }
+            });
+            dgvDetails.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Quantity",
+                HeaderText = "数量"
+            });
+            dgvDetails.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "TotalAmount",
+                HeaderText = "小计",
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "C2" }
+            });
+        }
+
+        private void SetupControls()
+        {
+            lblTotalAmount.Text = currentOrder.TotalAmount.ToString("C2");
+            currentOrder.Details.ListChanged += (s, e) => UpdateTotalAmount();
+        }
+
+        private void UpdateTotalAmount()
+        {
+            lblTotalAmount.Text = currentOrder.TotalAmount.ToString("C2");
+        }
+
+        private void btnAddDetail_Click(object sender, EventArgs e)
+        {
+            var detailForm = new DetailEditForm(null);
+            if (detailForm.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    currentOrder.AddDetail(detailForm.Detail);
+                    detailBindingSource.ResetBindings(false);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnEditDetail_Click(object sender, EventArgs e)
+        {
+            if (detailBindingSource.Current == null)
+            {
+                MessageBox.Show("请先选择要编辑的明细", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var currentDetail = (OrderDetails)detailBindingSource.Current;
+            var detailForm = new DetailEditForm(currentDetail);
+            if (detailForm.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    currentOrder.RemoveDetail(currentDetail);
+                    currentOrder.AddDetail(detailForm.Detail);
+                    detailBindingSource.ResetBindings(false);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnRemoveDetail_Click(object sender, EventArgs e)
+        {
+            if (detailBindingSource.Current == null)
+            {
+                MessageBox.Show("请先选择要删除的明细", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (MessageBox.Show("确定要删除此明细吗?", "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
+                {
+                    var currentDetail = (OrderDetails)detailBindingSource.Current;
+                    currentOrder.RemoveDetail(currentDetail);
+                    detailBindingSource.ResetBindings(false);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtCustomer.Text))
+            {
+                MessageBox.Show("请输入客户名称", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (currentOrder.Details.Count == 0)
+            {
+                MessageBox.Show("请至少添加一个订单明细", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                if (currentOrder.OrderId == 0)
+                {
+                    // 新建订单 - 需要生成订单号
+                    var maxId = orderService.GetAllOrders().Count > 0 ? 
+                        orderService.GetAllOrders().Max(o => o.OrderId) : 0;
+                    currentOrder.OrderId = maxId + 1;
+                    orderService.AddOrder(currentOrder);
+                }
+                else
+                {
+                    // 更新现有订单
+                    orderService.UpdateOrder(currentOrder);
+                }
+
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"保存订单失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+    }
+}
