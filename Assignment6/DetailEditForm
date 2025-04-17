@@ -1,0 +1,68 @@
+using OrderManagement.Core;
+using System;
+using System.Windows.Forms;
+
+namespace OrderManagement.WinForms
+{
+    public partial class DetailEditForm : Form
+    {
+        public OrderDetails Detail { get; private set; }
+
+        public DetailEditForm(OrderDetails detail)
+        {
+            InitializeComponent();
+
+            if (detail == null)
+            {
+                // 新建明细
+                this.Text = "添加明细";
+                Detail = new OrderDetails("", 0, 1);
+            }
+            else
+            {
+                // 编辑现有明细
+                this.Text = "编辑明细";
+                Detail = new OrderDetails(detail.ProductName, detail.Price, detail.Quantity);
+            }
+
+            InitializeDataBinding();
+        }
+
+        private void InitializeDataBinding()
+        {
+            txtProductName.DataBindings.Add("Text", Detail, "ProductName");
+            numPrice.DataBindings.Add("Value", Detail, "Price");
+            numQuantity.DataBindings.Add("Value", Detail, "Quantity");
+        }
+
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtProductName.Text))
+            {
+                MessageBox.Show("请输入商品名称", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (numPrice.Value <= 0)
+            {
+                MessageBox.Show("单价必须大于0", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (numQuantity.Value <= 0)
+            {
+                MessageBox.Show("数量必须大于0", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+    }
+}
