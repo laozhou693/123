@@ -1,0 +1,135 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using OrderManagement.Core.Data;
+using OrderManagement.Core.Models;
+
+namespace OrderManagement.Core.Services
+{
+    public class OrderService
+    {
+        private readonly OrderContext _context;
+
+        public OrderService(OrderContext context)
+        {
+            _context = context;
+        }
+
+        // 添加订单
+        public async Task<Order> AddOrderAsync(Order order)
+        {
+            if (await _context.Orders.AnyAsync(o => o.OrderId == order.OrderId))
+            {
+                throw new ArgumentException($"订单号 {order.OrderId} 已存在");
+            }
+
+            order.CalculateTotalAmount();
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+            return order;
+        }
+
+        // 删除订单
+        public async Task<bool> DeleteOrderAsync(int orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null)
+            {
+                throw new ArgumentException($"订单号 {orderId} 不存在");
+            }
+
+            _context.Orders.Remove(order);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        // 更新订单
+        public async Task<Order> UpdateOrderAsync(Order order)
+        {
+            var existingOrder = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == order.OrderId);
+
+            if (existingOrder == null)
+            {
+                throw new ArgumentException($"订单号 {order.OrderId} 不存在");
+            }
+
+            // 更新订单基本信息
+            existingOrder.OrderDate = order.OrderDate;
+            existingOrder.CustomerId = order.CustomerId;
+
+            // 更新订单明细
+            _context.OrderDetails.RemoveRange(existingOrder.OrderDetails);
+            foreach (var detail in order.OrderDetails)
+            {
+                existingOrder.OrderDetails.Add(detail);
+            }
+
+            existingOrder.CalculateTotalAmount();
+            await _context.SaveChangesAsync();
+            return existingOrder;
+        }
+
+        // 获取所有订单
+        public async Task<IEnumerable<Order>> GetAllOrdersAsync()
+        {
+            return await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .OrderBy(o => o.TotalAmount)
+                .ToListAsync();
+        }
+
+        // 按ID获取订单
+        public async Task<Order> GetOrderByIdAsync(int orderId)
+        {
+            return await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+        }
+
+        // 按客户查询订单
+        public async Task<IEnumerable<Order>> GetOrdersByCustomerAsync(int customerId)
+        {
+            return await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .Where(o => o.CustomerId == customerId)
+                .OrderBy(o => o.TotalAmount)
+                .ToListAsync();
+        }
+
+        // 按产品查询订单
+        public async Task<IEnumerable<Order>> GetOrdersByProductAsync(int productId)
+        {
+            return await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .Where(o => o.OrderDetails.Any(od => od.ProductId == productId))
+                .OrderBy(o => o.TotalAmount)
+                .ToListAsync();
+        }
+
+        // 按金额范围查询订单
+        public async Task<IEnumerable<Order>> GetOrdersByAmountRangeAsync(decimal minAmount, decimal maxAmount)
+        {
+            return await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .Where(o => o.TotalAmount >= minAmount && o.TotalAmount <= maxAmount)
+                .OrderBy(o => o.TotalAmount)
+                .ToListAsync();
+        }
+    }
+}
