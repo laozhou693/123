@@ -1,0 +1,52 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using OrderManagement.Core.Data;
+using OrderManagement.Core.Services;
+using OrderManagement.WinForms;
+using System;
+using System.Windows.Forms;
+
+namespace OrderManagement.WinForms
+{
+    static class Program
+    {
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            var host = CreateHostBuilder().Build();
+            ServiceProvider = host.Services;
+
+            Application.Run(ServiceProvider.GetRequiredService<MainForm>());
+        }
+
+        public static IServiceProvider ServiceProvider { get; private set; }
+
+        static IHostBuilder CreateHostBuilder()
+        {
+            return Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) => {
+                    // 配置DbContext
+                    services.AddDbContext<OrderContext>(options =>
+                    {
+                        options.UseMySql(
+                            "server=localhost;database=OrderManagement;user=root;password=yourpassword",
+                            new MySqlServerVersion(new Version(8, 0, 23)) // 根据你的MySQL版本调整
+                        );
+                    });
+
+                    // 注册服务
+                    services.AddScoped<OrderService>();
+                    
+                    // 注册窗体
+                    services.AddTransient<MainForm>();
+                    services.AddTransient<OrderEditForm>();
+                    services.AddTransient<QueryForm>();
+                    services.AddTransient<SortForm>();
+                    services.AddTransient<DetailEditForm>();
+                });
+        }
+    }
+}
