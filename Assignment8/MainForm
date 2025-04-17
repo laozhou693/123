@@ -1,0 +1,91 @@
+using Microsoft.EntityFrameworkCore;
+using OrderManagement.Core.Models;
+using OrderManagement.Core.Services;
+using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+
+namespace OrderManagement.WinForms
+{
+    public partial class MainForm : Form
+    {
+        private readonly OrderService _orderService;
+        private BindingSource _orderBindingSource = new BindingSource();
+        private BindingSource _detailBindingSource = new BindingSource();
+
+        public MainForm(OrderService orderService)
+        {
+            _orderService = orderService;
+            InitializeComponent();
+            InitializeDataBinding();
+            LoadOrdersAsync();
+        }
+
+        private void InitializeDataBinding()
+        {
+            // 订单列表绑定
+            _orderBindingSource.DataSource = typeof(Order);
+            dgvOrders.DataSource = _orderBindingSource;
+            dgvOrders.AutoGenerateColumns = false;
+
+            // 订单明细绑定
+            _detailBindingSource.DataSource = _orderBindingSource;
+            _detailBindingSource.DataMember = "OrderDetails";
+            dgvDetails.DataSource = _detailBindingSource;
+            dgvDetails.AutoGenerateColumns = false;
+
+            // 设置DataGridView列
+            ConfigureDataGridViewColumns();
+        }
+
+        private async void LoadOrdersAsync()
+        {
+            try
+            {
+                var orders = await _orderService.GetAllOrdersAsync();
+                _orderBindingSource.DataSource = orders;
+                lblStatus.Text = $"共 {orders.Count()} 条订单";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"加载订单失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ... 其他方法也需要修改为异步版本 ...
+        
+        private async void btnAdd_Click(object sender, EventArgs e)
+        {
+            var editForm = Program.ServiceProvider.GetRequiredService<OrderEditForm>();
+            editForm.SetOrder(null); // 新建订单
+            
+            if (editForm.ShowDialog() == DialogResult.OK)
+            {
+                await LoadOrdersAsync();
+            }
+        }
+
+        private async void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (_orderBindingSource.Current == null)
+            {
+                MessageBox.Show("请先选择要删除的订单", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (MessageBox.Show("确定要删除此订单吗?", "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
+                {
+                    var currentOrder = (Order)_orderBindingSource.Current;
+                    await _orderService.DeleteOrderAsync(currentOrder.OrderId);
+                    await LoadOrdersAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"删除订单失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+    }
+}
