@@ -1,0 +1,132 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+public class Crawler
+{
+    private Uri baseUri;
+    private HashSet<string> visitedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> errorUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> allowedExtensions = new HashSet<string> { ".htm", ".html", ".aspx", ".php", ".jsp", "/" };
+
+    public event Action<string> UrlVisited;
+    public event Action<string> UrlError;
+
+    public Crawler(string startUrl)
+    {
+        this.baseUri = new Uri(startUrl);
+    }
+
+    public async Task StartCrawlingAsync()
+    {
+        await CrawlPageAsync(baseUri.ToString());
+    }
+
+    private async Task CrawlPageAsync(string url)
+    {
+        if (visitedUrls.Contains(url))
+            return;
+
+        visitedUrls.Add(url);
+        UrlVisited?.Invoke(url);
+
+        try
+        {
+            using (var client = new WebClient())
+            {
+                client.Headers.Add("User-Agent", "Mozilla/5.0");
+                string html = await client.DownloadStringTaskAsync(url);
+
+                // 只有当是htm/html/aspx/php/jsp等网页时才解析链接
+                if (ShouldParseLinks(url))
+                {
+                    ParseLinks(html, url);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorUrls.Add(url);
+            UrlError?.Invoke($"Error crawling {url}: {ex.Message}");
+        }
+    }
+
+    private bool ShouldParseLinks(string url)
+    {
+        Uri uri = new Uri(url);
+        string extension = System.IO.Path.GetExtension(uri.AbsolutePath).ToLower();
+        return allowedExtensions.Contains(extension) || string.IsNullOrEmpty(extension);
+    }
+
+    private void ParseLinks(string html, string currentUrl)
+    {
+        var linkRegex = new Regex(@"<a\s+(?:[^>]*?\s+)?href=""([^""]*)""", RegexOptions.IgnoreCase);
+        var matches = linkRegex.Matches(html);
+
+        foreach (Match match in matches)
+        {
+            string href = match.Groups[1].Value;
+
+            // 跳过空链接和锚点
+            if (string.IsNullOrEmpty(href) || href.StartsWith("#"))
+                continue;
+
+            string absoluteUrl = GetAbsoluteUrl(href, currentUrl);
+
+            // 只爬取相同域名的链接
+            if (IsSameDomain(absoluteUrl))
+            {
+                Task.Run(() => CrawlPageAsync(absoluteUrl)).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private string GetAbsoluteUrl(string href, string currentUrl)
+    {
+        Uri currentUri = new Uri(currentUrl);
+
+        // 处理相对路径
+        if (href.StartsWith("//"))
+        {
+            return currentUri.Scheme + ":" + href;
+        }
+        else if (href.StartsWith("/"))
+        {
+            return new Uri(currentUri, href).AbsoluteUri;
+        }
+        else if (href.StartsWith("./"))
+        {
+            return new Uri(currentUri, href.Substring(2)).AbsoluteUri;
+        }
+        else if (href.StartsWith("../"))
+        {
+            return new Uri(currentUri, href).AbsoluteUri;
+        }
+        else if (!href.StartsWith("http://") && !href.StartsWith("https://"))
+        {
+            // 处理没有协议和斜杠的相对路径
+            return new Uri(currentUri, href).AbsoluteUri;
+        }
+
+        return href;
+    }
+
+    private bool IsSameDomain(string url)
+    {
+        try
+        {
+            Uri uri = new Uri(url);
+            return uri.Host.Equals(baseUri.Host, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public IEnumerable<string> GetVisitedUrls() => visitedUrls;
+    public IEnumerable<string> GetErrorUrls() => errorUrls;
+}
