@@ -1,0 +1,48 @@
+using System;
+using System.Windows.Forms;
+
+namespace OrderManagement.WinForms
+{
+    public partial class SortForm : Form
+    {
+        public SortType SortType { get; private set; }
+
+        public SortForm()
+        {
+            InitializeComponent();
+            SortType = SortType.ByOrderId; // 默认排序方式
+        }
+
+        private void rbOrderId_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbOrderId.Checked) SortType = SortType.ByOrderId;
+        }
+
+        private void rbTotalAmount_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbTotalAmount.Checked) SortType = SortType.ByTotalAmount;
+        }
+
+        private void rbCustomer_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbCustomer.Checked) SortType = SortType.ByCustomer;
+        }
+
+        private void rbOrderDate_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbOrderDate.Checked) SortType = SortType.ByOrderDate;
+        }
+
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+    }
+}
